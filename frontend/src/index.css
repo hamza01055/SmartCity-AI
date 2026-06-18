@@ -1,0 +1,67 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body, #root { height: 100%; }
+
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  color: #f1f5f9;
+  -webkit-font-smoothing: antialiased;
+  background-color: #030712;
+  background-image:
+    linear-gradient(rgba(3,7,18,0.82), rgba(3,7,18,0.93)),
+    url('https://media.gettyimages.com/id/1661051950/photo/abstract-smart-city-concept.jpg?s=612x612&w=0&k=20&c=h5xQJlvwqw9kfzuJ5zffbawOvS3F7KaXC1fO7D5kH8c=');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+}
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: #030712; }
+::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(56,189,248,0.35); }
+
+.glass {
+  background: rgba(15,23,42,0.65);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(56,189,248,0.1);
+}
+
+.glass-dark {
+  background: rgba(3,7,18,0.78);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(56,189,248,0.08);
+}
+
+.text-gradient {
+  background: linear-gradient(135deg, #38bdf8, #818cf8);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #38bdf8, #818cf8);
+  color: #030712;
+  font-weight: 700;
+  transition: all 0.2s;
+}
+.btn-primary:hover:not(:disabled) {
+  opacity: 0.9;
+  box-shadow: 0 0 28px rgba(56,189,248,0.45);
+  transform: translateY(-1px);
+}
+.btn-primary:disabled { opacity: 0.4; }
+
+.glow-sky    { text-shadow: 0 0 18px rgba(56,189,248,0.8); }
+.glow-mint   { text-shadow: 0 0 18px rgba(52,211,153,0.8); }
+.glow-violet { text-shadow: 0 0 18px rgba(129,140,248,0.8); }
+
+@keyframes scan-line {
+  from { transform: translateY(-100%); }
+  to   { transform: translateY(800%); }
+}

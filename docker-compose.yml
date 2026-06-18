@@ -1,0 +1,87 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgis/postgis:16-3.4
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  ml_service:
+    build: ./ml_service
+    environment:
+      USE_REAL_MODEL: ${USE_REAL_MODEL}
+      MODEL_PATH: ${MODEL_PATH}
+      ROBOFLOW_API_KEY: ${ROBOFLOW_API_KEY}
+      ROBOFLOW_MODEL: ${ROBOFLOW_MODEL}
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./ml_service:/app
+      - ml_weights:/app/weights
+
+  backend:
+    build: ./backend
+    env_file: .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "3333:3333"
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+      - uploads:/app/uploads
+    command: node src/index.js
+
+  worker:
+    build: ./worker
+    env_file: .env
+    depends_on:
+      redis:
+        condition: service_healthy
+      ml_service:
+        condition: service_started
+      backend:
+        condition: service_started
+    volumes:
+      - ./worker:/app
+      - /app/node_modules
+      - uploads:/app/uploads
+
+  frontend:
+    build: ./frontend
+    env_file: .env
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    command: npm run dev -- --host 0.0.0.0
+
+volumes:
+  pgdata:
+  uploads:
+  ml_weights:

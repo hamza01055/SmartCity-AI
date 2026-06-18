@@ -1,0 +1,17 @@
+{
+  "name": "smart-city-worker",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js"
+  },
+  "dependencies": {
+    "bullmq": "^5.13.0",
+    "form-data": "^4.0.0",
+    "ioredis": "^5.4.1",
+    "node-fetch": "^3.3.2",
+    "pg": "^8.13.0"
+  }
+}

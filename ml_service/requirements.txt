@@ -1,0 +1,8 @@
+fastapi==0.115.0
+uvicorn[standard]==0.30.6
+python-multipart==0.0.9
+pillow==10.4.0
+pydantic==2.9.2
+requests==2.32.3
+# Heavy deps only needed when using local YOLOv8 weights. Kept here for prod parity.
+ultralytics==8.3.0
