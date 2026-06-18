@@ -1,71 +1,111 @@
-# Smart City Issue Detection & Reporting System
+# SmartCity — AI-Powered Urban Issue Detection & Management Platform
 
-An AI-powered web application that lets citizens report urban issues by submitting a
-photo and GPS location. A trained YOLOv8 model automatically detects and classifies the
-issue, and city administrators manage everything from a live map dashboard.
+> **Final Year Project** · BSCS · Hamza Shahzad · [hamza01055](https://github.com/hamza01055)
 
-The system detects three classes of urban issues:
+An end-to-end web platform that lets citizens report urban infrastructure problems (potholes, garbage, broken streetlights) by uploading a photo and sharing their GPS location. A YOLOv8 computer-vision model automatically classifies the issue, and city administrators manage the full workflow — from triage to field-worker dispatch — through a live map dashboard.
 
-- **Pothole** — damaged road surfaces
-- **Traffic_Light** — traffic signal infrastructure
-- **Waste_Container** — garbage bins and waste accumulation
+---
 
-## Why this project
-
-Traditional municipal complaint systems are slow and manual: a citizen files a complaint,
-someone reads it, someone categorizes it, someone routes it. This project automates the
-detection and categorization step using computer vision, so a report is classified the
-moment it is submitted and appears on the admin dashboard in seconds.
-
-## How it works
-
-A citizen submits a photo, description, and GPS coordinates through the web form. The
-backend saves the image and report details, then places a job on a queue. A background
-worker picks up the job, sends the image to the machine-learning service, and the model
-returns the detected category, a confidence score, and a bounding box. The worker writes
-those results back to the database, and the admin dashboard shows the report on an
-interactive map, color-coded by issue type.
+## Live Architecture
 
 ```
-  Citizen (React frontend)
-        |
-        |  POST /api/report  (photo + GPS + description)
-        v
-  Backend (Express)  --->  PostgreSQL + PostGIS   (stores report, status = pending)
-        |
-        |  enqueue job
-        v
-  Redis queue (BullMQ)
-        |
-        |  worker pulls job
-        v
-  Worker (Node.js)  --->  ML Service (FastAPI + YOLOv8)  --->  category + confidence + bbox
-        |
-        |  UPDATE report (status = reviewed)
-        v
-  Admin Dashboard (live map, stats, table)
+  Citizen / Field Worker (React + Tailwind)
+          |
+          |  POST /api/report  (photo + GPS)
+          v
+  Backend (Node.js / Express)
+          |─── PostgreSQL + PostGIS  (reports, geo-queries)
+          |─── Redis / BullMQ        (inference job queue)
+          |
+          |  enqueue job
+          v
+  ML Worker (Node.js BullMQ consumer)
+          |
+          |  POST /predict
+          v
+  ML Service (Python / FastAPI / YOLOv8)
+          |
+          |  category + confidence + bounding box
+          v
+  Report updated → Admin Dashboard (live map, analytics, dispatch)
 ```
 
-## Tech stack
+---
+
+## Key Features
+
+### Citizen Portal
+| Feature | Detail |
+|---------|--------|
+| Photo upload | Drag-drop or camera capture (HEIC/JPG/PNG/WEBP, max 10 MB) |
+| GPS auto-detect | One-click browser geolocation; crews dispatched to exact coords |
+| AI classification | No description needed — YOLOv8 reads the photo automatically |
+| Status tracking | Real-time 5-step progress tracker by report ID |
+
+### Admin Dashboard
+| Feature | Detail |
+|---------|--------|
+| Live map | Leaflet map, reports color-coded by category |
+| Assign & dispatch | Set worker, department, priority (high/medium/low) from a side panel |
+| Filter & export | Filter by category or status; one-click CSV export |
+| KPI cards | Total / Pending / Reviewed / Assigned / Resolved at a glance |
+
+### Analytics Page
+| Feature | Detail |
+|---------|--------|
+| Trend chart | Reports per day for the last 7 days |
+| Category breakdown | Bar chart by issue type with AI confidence |
+| Heatmap | Leaflet heatmap of report hot-spots |
+| Worker leaderboard | Completed vs active tasks per field worker |
+| Avg resolution time | Mean hours from submission to resolution |
+
+### Field Worker Portal
+| Feature | Detail |
+|---------|--------|
+| Personal task list | Shows only tasks assigned to the logged-in worker |
+| Status advancement | Advance through Assigned → In Progress → Resolved |
+| Completion panel | Submit notes + optional completion photo |
+
+### Auth System
+| Feature | Detail |
+|---------|--------|
+| Login page | Professional two-column layout, demo credential quick-fill |
+| Registration | Full-name, username, password-strength meter, role selection |
+| Offline fallback | Works without backend using localStorage credential store |
+| Session persistence | Auth state survives page refresh via localStorage |
+
+---
+
+## Tech Stack
 
 | Layer | Technology |
-|-------|-----------|
-| Frontend | React, Vite, Tailwind CSS, Formik + Yup, Leaflet (maps) |
-| Backend | Node.js, Express, Multer (uploads), BullMQ (queue producer) |
-| Database | PostgreSQL with PostGIS for geospatial data |
-| Queue | Redis + BullMQ |
-| Worker | Node.js, BullMQ consumer |
-| ML Service | Python, FastAPI, Ultralytics YOLOv8 |
-| Model | YOLOv8m, custom-trained on 3 classes |
-| Deployment | Docker (multi-container) |
+|-------|------------|
+| **Frontend** | React 18, Vite, TypeScript, Tailwind CSS v3 |
+| **UI Style** | Dark cyberpunk / glassmorphism — custom Tailwind color tokens |
+| **Maps** | React-Leaflet, OpenStreetMap tiles, CircleMarker heat overlays |
+| **Forms** | Formik + Yup validation |
+| **Backend** | Node.js 20, Express 4, Multer (file uploads) |
+| **Queue** | Redis + BullMQ (producer in backend, consumer in worker) |
+| **Database** | PostgreSQL 15 + PostGIS extension |
+| **ML Service** | Python 3.11, FastAPI, Ultralytics YOLOv8 |
+| **Model** | YOLOv8m — custom-trained on 3 urban classes |
+| **Deployment** | Docker Compose (6 containers) |
 
-## The machine learning model
+---
 
-The detection model is a YOLOv8m network trained on a custom dataset of roughly 1,500
-labeled images across the three classes. Training was run for 100 epochs on a Google Colab
-T4 GPU.
+## Machine Learning Model
 
-**Validation results:**
+The detection model is a **YOLOv8m** network trained on a custom dataset of ~1,500 labeled images across three classes:
+
+| Class | Description |
+|-------|-------------|
+| `Pothole` | Damaged road surfaces |
+| `Traffic_Light` | Traffic signal infrastructure |
+| `Waste_Container` | Garbage bins and accumulation |
+
+Training was run for **100 epochs** on a Google Colab T4 GPU.
+
+### Validation Results
 
 | Metric | Score |
 |--------|-------|
@@ -74,102 +114,153 @@ T4 GPU.
 | Precision | 0.82 |
 | Recall | 0.70 |
 
-The trained weights live at `ml_service/weights/best.pt`. The FastAPI service loads them on
-startup and exposes a `/predict` endpoint that accepts an image and returns predictions.
+The trained weights are at `ml_service/weights/best.pt`. The FastAPI service loads them on startup and exposes a `/predict` endpoint that accepts an image and returns predictions with category, confidence, and bounding-box coordinates.
 
-To retrain or extend the model (for example, to add new classes like fire or flooding), use
-the notebook at `notebooks/yolov8_training.ipynb`, then drop the new `best.pt` into
-`ml_service/weights/` and restart the ML service.
+To retrain or add new classes (e.g. flooding, fire), use `notebooks/yolov8_training.ipynb`, then drop the new `best.pt` into `ml_service/weights/` and restart the ML service container.
 
-## Project structure
+---
+
+## Project Structure
 
 ```
 smart-city-project/
-├── frontend/       React app: report form, status tracker, admin dashboard
-├── backend/        Express API: report submission, listing, admin updates, queue producer
-├── ml_service/     FastAPI service hosting the YOLOv8 model
-│   └── weights/    Trained model (best.pt)
-├── worker/         Background worker: pulls queue jobs, calls ML, updates the database
-├── data/           Training dataset (raw_dataset/pothole, traffic_lights, waste_container)
-├── notebooks/      YOLOv8 training notebook for Google Colab
-├── prepare_dataset.py   Cleans and splits the dataset into YOLO train/valid format
+├── frontend/                  React + TypeScript app
+│   └── src/
+│       ├── pages/
+│       │   ├── LoginPage.tsx       Sign-in with demo credential quick-fill
+│       │   ├── RegisterPage.tsx    Account creation with password strength meter
+│       │   ├── ReportPage.tsx      Citizen photo + GPS submission form
+│       │   ├── StatusPage.tsx      5-step progress tracker by report ID
+│       │   ├── DashboardPage.tsx   Admin map, filters, dispatch panel, CSV export
+│       │   ├── AnalyticsPage.tsx   KPIs, trend chart, heatmap, worker leaderboard
+│       │   └── FieldWorkerPage.tsx Task list, status advancement, completion panel
+│       ├── components/
+│       │   └── SmartCityHero.tsx   Canvas 3D animated city (HTML5, mouse-reactive)
+│       ├── contexts/
+│       │   └── AuthContext.tsx     Auth state, localStorage persistence, register()
+│       └── lib/
+│           └── api.ts              Axios client, Report type, color maps
+│
+├── backend/                   Express API + BullMQ producer
+│   └── src/index.js
+│       ├── POST /api/auth/login      Sign in (7 demo users + registered users)
+│       ├── POST /api/auth/register   Create account (in-memory + DB)
+│       ├── POST /api/report          Submit report, enqueue ML job
+│       ├── GET  /api/reports         List with status/category/worker filters
+│       ├── GET  /api/reports/:id     Single report
+│       ├── PATCH /api/reports/:id    Admin update (status, worker, priority, dept)
+│       ├── POST /api/reports/:id/complete  Field worker completion with photo
+│       └── GET  /api/analytics       5 parallel SQL queries → KPIs + trends
+│
+├── ml_service/                FastAPI + YOLOv8 inference
+│   ├── app/main.py            POST /predict endpoint
+│   └── weights/best.pt        Trained YOLOv8m weights
+│
+├── worker/                    BullMQ consumer: dequeues jobs, calls ML, updates DB
+│
+├── notebooks/
+│   └── yolov8_training.ipynb  Colab training notebook
+│
+├── prepare_dataset.py         Dataset cleaning + YOLO train/val split
 ├── docker-compose.yml
-└── .env            Environment configuration
+└── .env                       Environment configuration
 ```
 
-## Running the project
+---
+
+## Running the Project
 
 ### Prerequisites
-
-- Docker Desktop installed and running
-- The trained model present at `ml_service/weights/best.pt`
+- Docker Desktop (running)
+- Trained model at `ml_service/weights/best.pt`
 
 ### Start all services
-
-From the project root:
 
 ```bash
 docker compose up --build
 ```
 
-This starts six containers: PostgreSQL, Redis, the ML service, the backend, the worker, and
-the frontend.
+Six containers start: `postgres`, `redis`, `ml_service`, `backend`, `worker`, `frontend`.
 
-Once everything is running, open:
+| URL | Service |
+|-----|---------|
+| http://localhost:5173 | Citizen & Admin app |
+| http://localhost:5173/admin | Admin dashboard |
+| http://localhost:5173/analytics | Analytics |
+| http://localhost:3333 | Backend REST API |
+| http://localhost:8000/docs | ML service Swagger UI |
 
-- **Citizen app:** http://localhost:5173
-- **Admin dashboard:** http://localhost:5173/admin
-- **Backend API:** http://localhost:3333
-- **ML service docs:** http://localhost:8000/docs
+### Development (without Docker)
 
-### Trying it out
+```bash
+# Terminal 1 — Frontend
+cd frontend && npm install && npm run dev
 
-On the citizen page, add a photo of a pothole, traffic light, or waste container, write a
-short description, click "Use my location" to capture GPS, and submit. Within a few seconds
-the report appears on the admin dashboard with the AI-detected category and confidence
-score.
+# Terminal 2 — Backend (requires Postgres + Redis running)
+cd backend && npm install && npm run dev
 
-## Environment configuration
-
-The `.env` file holds all configuration. The important distinction: backend services running
-inside Docker reach each other by container name (`postgres`, `redis`, `ml_service`), while
-the frontend variables use `localhost` because they are read by the browser, not by a
-container.
-
+# Terminal 3 — ML service (requires Python + weights)
+cd ml_service && pip install -r requirements.txt && uvicorn app.main:app --reload
 ```
+
+---
+
+## Demo Accounts
+
+| Username | Password | Role |
+|----------|----------|------|
+| `admin` | `admin123` | Admin |
+| `hamza` | `hamza123` | Admin |
+| `ahmed` | `ahmed123` | Field Worker |
+| `sara` | `sara123` | Field Worker |
+| `usman` | `usman123` | Field Worker |
+
+Or create a new account via the **Register** page — works offline via localStorage.
+
+---
+
+## Environment Configuration
+
+```env
+# Backend (Docker service names for inter-container networking)
 DB_HOST=postgres
+DB_PORT=5432
+DB_USER=smartcity
+DB_PASSWORD=smartcity
+DB_DATABASE=smartcity
+
 REDIS_HOST=redis
+REDIS_PORT=6379
+
 ML_SERVICE_URL=http://ml_service:8000
-VITE_API_URL=http://localhost:3333
 USE_REAL_MODEL=true
 MODEL_PATH=/app/weights/best.pt
+
+# Frontend (browser-visible, must use localhost)
+VITE_API_URL=http://localhost:3333
 ```
 
-## Features
+---
 
-**Citizen features**
-- Submit reports with photo, description, and GPS location
-- Track report status by ID
+## Screenshots
 
-**Admin dashboard**
-- Interactive map of all reports, color-coded by category
-- Statistics by status and by issue type
-- Sortable table of recent reports
-- Filter by category
+> _Add screenshots of the login page, report form, admin dashboard, and analytics page here._
 
-**Machine learning**
-- Automatic issue classification from photos
-- Confidence scoring for every detection
-- Bounding-box localization of the detected issue
+---
 
-## Future work
+## Future Work
 
-- Real-time dashboard updates via WebSockets (currently polls every few seconds)
-- Automatic routing of reports to the responsible city department
-- Analytics: resolution times, hotspot heatmaps, trend charts
-- Additional issue classes (fire, flooding, traffic accidents)
-- Cloud deployment
+- Real-time dashboard updates via WebSockets (currently polls every 6 s)
+- JWT-based stateless authentication replacing the demo token
+- Cloud deployment (AWS ECS / Railway / Render)
+- Push notifications to field workers on new assignments
+- Extended model classes: flooding, fire, illegal dumping, broken pavements
+- Mobile-native app (React Native) for field workers
+
+---
 
 ## Author
 
-Built as a final-year project by [hamza01055](https://github.com/hamza01055).
+**Hamza Shahzad** · Final Year Project · BSCS  
+GitHub: [hamza01055](https://github.com/hamza01055)  
+Email: hamzashahzad454545@gmail.com

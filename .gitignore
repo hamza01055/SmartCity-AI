@@ -1,0 +1,93 @@
+# Node dependencies
+node_modules/
+
+# Python artifacts
+*.pyc
+__pycache__/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+pip-wheel-metadata/
+*.egg-info/
+
+# Build outputs
+build/
+dist/
+.tmp/
+egg-info/
+
+# Environment / secrets
+.env
+.env.*
+.python-version
+
+# Uploads, datasets & model weights (large binaries)
+# top-level and nested uploads
+uploads/
+**/uploads/
+ml_service/weights/*.pt
+smart-city-project/ml_service/weights/*.pt
+# Ignore entire data directory (top-level and any nested `data/` folders)
+data/
+**/data/
+data/raw_dataset/
+data/raw_dataset/**
+data/yolo_ready/
+data/yolo_ready/**
+data/**/images/
+data/**/labels/
+
+# Training outputs and checkpoints
+runs/
+runs/**
+notebooks/.ipynb_checkpoints/
+**/.ipynb_checkpoints/
+
+# Docker
+docker-compose.override.yml
+**/docker-compose.override.yml
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Misc
+.cache/
+tmp/
+coverage/
+htmlcov/
+/.history/
+
+# Tabular and database files (do not push data tables)
+# Common table formats anywhere in the repo
+*.csv
+*.tsv
+*.xlsx
+*.xls
+*.parquet
+*.feather
+*.db
+*.sqlite
+*.npz
+*.npy
+
+# Also ignore tabular/data files under the data folder explicitly
+data/**/*.csv
+data/**/*.tsv
+data/**/*.xlsx
+data/**/*.xls
+data/**/*.parquet
+data/**/*.feather
+data/**/*.db
+data/**/*.sqlite
+data/**/*.npz
+data/**/*.npy
