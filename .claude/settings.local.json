@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(Get-ChildItem -Path \"c:\\\\Users\\\\Ayesha\\\\Desktop\\\\smart-city-project\\\\frontend\\\\src\" -Recurse -Name)",
+      "Bash(docker compose *)",
+      "Bash(docker network *)"
+    ]
+  }
+}
